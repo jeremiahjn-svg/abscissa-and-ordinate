@@ -41,7 +41,12 @@ export default function Home() {
             <p className="text-space-300 text-sm mb-6 leading-relaxed text-starlight-300">
               A Next.js application evaluating daily temperature deviations against 10-year historical averages using Recharts and Tailwind CSS.
             </p>
-            <a href="#" className="text-brass-400 text-sm uppercase tracking-wider hover:text-brass-500 transition-colors">
+            <a
+              href="https://temp-trend.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brass-400 text-sm uppercase tracking-wider hover:text-brass-500 transition-colors"
+            >
               Launch App &rarr;
             </a>
           </div>
