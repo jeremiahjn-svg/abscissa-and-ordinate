@@ -42,7 +42,7 @@ export default function Home() {
               A Next.js application evaluating daily temperature deviations against 10-year historical averages using Recharts and Tailwind CSS.
             </p>
             <a
-              href="https://temp-trend.com"
+              href="https://temp-trends.com"
               target="_blank"
               rel="noopener noreferrer"
               className="text-brass-400 text-sm uppercase tracking-wider hover:text-brass-500 transition-colors"
