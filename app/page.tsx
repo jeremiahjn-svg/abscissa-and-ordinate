@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-20">
@@ -19,7 +21,19 @@ export default function Home() {
       <section id="apps" className="py-24 border-b border-space-700/50">
         <h2 className="font-serif text-3xl text-brass-400 mb-12">Interactive Applications</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          
+
+          {/* Birth City to Ballpark */}
+          <div className="group relative bg-space-800 border border-space-700 p-8 rounded-lg hover:border-brass-400/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(229,193,88,0.1)]">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brass-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-t-lg"></div>
+            <h3 className="text-xl font-semibold mb-3">Birth City to Ballpark</h3>
+            <p className="text-space-300 text-sm mb-6 leading-relaxed text-starlight-300">
+              Mapping every 2025 MLB roster from player birthplace to home stadium, with per-team travel distance summaries drawn from the Lahman Baseball Database.
+            </p>
+            <Link href="/apps/travel" className="text-brass-400 text-sm uppercase tracking-wider hover:text-brass-500 transition-colors">
+              Launch App &rarr;
+            </Link>
+          </div>
+
           {/* Example App Card */}
           <div className="group relative bg-space-800 border border-space-700 p-8 rounded-lg hover:border-brass-400/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(229,193,88,0.1)]">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brass-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-t-lg"></div>
