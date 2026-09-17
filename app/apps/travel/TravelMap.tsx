@@ -15,6 +15,7 @@ import {
 } from "d3-zoom";
 import worldTopo from "world-atlas/countries-110m.json";
 import rawTravelData from "./travel-data.json";
+import { TEAM_COLORS } from "../../lib/mlbTeams";
 
 type Player = {
   name: string;
@@ -44,39 +45,6 @@ type Team = {
 type TravelData = { season: number; teams: Team[] };
 
 const travelData = rawTravelData as TravelData;
-
-const TEAM_COLORS: Record<string, string> = {
-  ARI: "#A71930",
-  ATH: "#3EA6A6",
-  ATL: "#CE1141",
-  BAL: "#DF4601",
-  BOS: "#BD3039",
-  CHA: "#C4CED4",
-  CHN: "#4F8FE0",
-  CIN: "#C6011F",
-  CLE: "#E31937",
-  COL: "#8B5FBF",
-  DET: "#FA4616",
-  HOU: "#EB6E1F",
-  KCA: "#5B9BD5",
-  LAA: "#BA0021",
-  LAN: "#4C9FE0",
-  MIA: "#00A3E0",
-  MIL: "#FFC52F",
-  MIN: "#D31145",
-  NYA: "#8DA9C4",
-  NYN: "#FF5910",
-  PHI: "#E81828",
-  PIT: "#FDB827",
-  SDN: "#FFC425",
-  SEA: "#3EBFAE",
-  SFN: "#FD5A1E",
-  SLN: "#C41E3A",
-  TBA: "#8FBCE6",
-  TEX: "#C0111F",
-  TOR: "#4F8FE0",
-  WAS: "#E4405F",
-};
 
 const WIDTH = 960;
 const HEIGHT = 500;

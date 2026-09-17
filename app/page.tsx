@@ -51,16 +51,16 @@ export default function Home() {
             </a>
           </div>
 
-          {/* Example App Card 2 */}
+          {/* Cost of Doing Baseball */}
           <div className="group relative bg-space-800 border border-space-700 p-8 rounded-lg hover:border-brass-400/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(229,193,88,0.1)]">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brass-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-t-lg"></div>
-            <h3 className="text-xl font-semibold mb-3">Cost-Per-Win MLB Analysis</h3>
+            <h3 className="text-xl font-semibold mb-3">Cost of Doing Baseball</h3>
             <p className="text-space-300 text-sm mb-6 leading-relaxed text-starlight-300">
-              Tracking team payroll efficiency against season win totals by integrating MLB Stats API endpoints with custom CSV datasets.
+              Every team&rsquo;s win percentage plotted against total payroll, split into four quadrants of roster efficiency, by way of the MLB Stats API and Spotrac payroll data.
             </p>
-            <a href="#" className="text-brass-400 text-sm uppercase tracking-wider hover:text-brass-500 transition-colors">
+            <Link href="/apps/cost-of-baseball" className="text-brass-400 text-sm uppercase tracking-wider hover:text-brass-500 transition-colors">
               Launch App &rarr;
-            </a>
+            </Link>
           </div>
           
         </div>

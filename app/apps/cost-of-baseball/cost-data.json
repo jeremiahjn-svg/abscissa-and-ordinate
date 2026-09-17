@@ -1,0 +1,248 @@
+{
+  "season": 2026,
+  "scrapedAt": null,
+  "mock": true,
+  "mockNote": "placeholder standings/payroll figures for previewing the chart only. Run npm run scrape:cost-of-baseball to replace with live data.",
+  "teams": [
+    {
+      "teamID": "ARI",
+      "name": "Arizona Diamondbacks",
+      "wins": 86,
+      "losses": 76,
+      "winPct": 0.5309,
+      "payroll": 148000000
+    },
+    {
+      "teamID": "ATH",
+      "name": "Athletics",
+      "wins": 68,
+      "losses": 94,
+      "winPct": 0.4198,
+      "payroll": 72000000
+    },
+    {
+      "teamID": "ATL",
+      "name": "Atlanta Braves",
+      "wins": 89,
+      "losses": 73,
+      "winPct": 0.5494,
+      "payroll": 215000000
+    },
+    {
+      "teamID": "BAL",
+      "name": "Baltimore Orioles",
+      "wins": 83,
+      "losses": 79,
+      "winPct": 0.5123,
+      "payroll": 105000000
+    },
+    {
+      "teamID": "BOS",
+      "name": "Boston Red Sox",
+      "wins": 90,
+      "losses": 72,
+      "winPct": 0.5556,
+      "payroll": 196000000
+    },
+    {
+      "teamID": "CHA",
+      "name": "Chicago White Sox",
+      "wins": 61,
+      "losses": 101,
+      "winPct": 0.3765,
+      "payroll": 88000000
+    },
+    {
+      "teamID": "CHN",
+      "name": "Chicago Cubs",
+      "wins": 92,
+      "losses": 70,
+      "winPct": 0.5679,
+      "payroll": 210000000
+    },
+    {
+      "teamID": "CIN",
+      "name": "Cincinnati Reds",
+      "wins": 79,
+      "losses": 83,
+      "winPct": 0.4877,
+      "payroll": 102000000
+    },
+    {
+      "teamID": "CLE",
+      "name": "Cleveland Guardians",
+      "wins": 88,
+      "losses": 74,
+      "winPct": 0.5432,
+      "payroll": 98000000
+    },
+    {
+      "teamID": "COL",
+      "name": "Colorado Rockies",
+      "wins": 59,
+      "losses": 103,
+      "winPct": 0.3642,
+      "payroll": 118000000
+    },
+    {
+      "teamID": "DET",
+      "name": "Detroit Tigers",
+      "wins": 91,
+      "losses": 71,
+      "winPct": 0.5617,
+      "payroll": 132000000
+    },
+    {
+      "teamID": "HOU",
+      "name": "Houston Astros",
+      "wins": 87,
+      "losses": 75,
+      "winPct": 0.537,
+      "payroll": 178000000
+    },
+    {
+      "teamID": "KCA",
+      "name": "Kansas City Royals",
+      "wins": 80,
+      "losses": 82,
+      "winPct": 0.4938,
+      "payroll": 96000000
+    },
+    {
+      "teamID": "LAA",
+      "name": "Los Angeles Angels",
+      "wins": 72,
+      "losses": 90,
+      "winPct": 0.4444,
+      "payroll": 168000000
+    },
+    {
+      "teamID": "LAN",
+      "name": "Los Angeles Dodgers",
+      "wins": 98,
+      "losses": 64,
+      "winPct": 0.6049,
+      "payroll": 318000000
+    },
+    {
+      "teamID": "MIA",
+      "name": "Miami Marlins",
+      "wins": 65,
+      "losses": 97,
+      "winPct": 0.4012,
+      "payroll": 76000000
+    },
+    {
+      "teamID": "MIL",
+      "name": "Milwaukee Brewers",
+      "wins": 93,
+      "losses": 69,
+      "winPct": 0.5741,
+      "payroll": 112000000
+    },
+    {
+      "teamID": "MIN",
+      "name": "Minnesota Twins",
+      "wins": 77,
+      "losses": 85,
+      "winPct": 0.4753,
+      "payroll": 109000000
+    },
+    {
+      "teamID": "NYA",
+      "name": "New York Yankees",
+      "wins": 95,
+      "losses": 67,
+      "winPct": 0.5864,
+      "payroll": 289000000
+    },
+    {
+      "teamID": "NYN",
+      "name": "New York Mets",
+      "wins": 84,
+      "losses": 78,
+      "winPct": 0.5185,
+      "payroll": 262000000
+    },
+    {
+      "teamID": "PHI",
+      "name": "Philadelphia Phillies",
+      "wins": 94,
+      "losses": 68,
+      "winPct": 0.5802,
+      "payroll": 256000000
+    },
+    {
+      "teamID": "PIT",
+      "name": "Pittsburgh Pirates",
+      "wins": 70,
+      "losses": 92,
+      "winPct": 0.4321,
+      "payroll": 84000000
+    },
+    {
+      "teamID": "SDN",
+      "name": "San Diego Padres",
+      "wins": 85,
+      "losses": 77,
+      "winPct": 0.5247,
+      "payroll": 224000000
+    },
+    {
+      "teamID": "SEA",
+      "name": "Seattle Mariners",
+      "wins": 82,
+      "losses": 80,
+      "winPct": 0.5062,
+      "payroll": 142000000
+    },
+    {
+      "teamID": "SFN",
+      "name": "San Francisco Giants",
+      "wins": 78,
+      "losses": 84,
+      "winPct": 0.4815,
+      "payroll": 171000000
+    },
+    {
+      "teamID": "SLN",
+      "name": "St. Louis Cardinals",
+      "wins": 75,
+      "losses": 87,
+      "winPct": 0.463,
+      "payroll": 156000000
+    },
+    {
+      "teamID": "TBA",
+      "name": "Tampa Bay Rays",
+      "wins": 76,
+      "losses": 86,
+      "winPct": 0.4691,
+      "payroll": 79000000
+    },
+    {
+      "teamID": "TEX",
+      "name": "Texas Rangers",
+      "wins": 81,
+      "losses": 81,
+      "winPct": 0.5,
+      "payroll": 189000000
+    },
+    {
+      "teamID": "TOR",
+      "name": "Toronto Blue Jays",
+      "wins": 87,
+      "losses": 75,
+      "winPct": 0.537,
+      "payroll": 241000000
+    },
+    {
+      "teamID": "WAS",
+      "name": "Washington Nationals",
+      "wins": 63,
+      "losses": 99,
+      "winPct": 0.3889,
+      "payroll": 91000000
+    }
+  ]
+}
