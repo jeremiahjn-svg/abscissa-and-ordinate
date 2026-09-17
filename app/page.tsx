@@ -48,10 +48,10 @@ export default function Home() {
       </section>
 
       {/* Blog & How-To Section */}
-      <section id="blog" className="py-24">
+      <section id="blog" className="py-24 border-b border-space-700/50">
         <h2 className="font-serif text-3xl text-brass-400 mb-12">Latest Insights & How-Tos</h2>
         <div className="space-y-8">
-          
+
           {/* Example Blog Post */}
           <article className="group cursor-pointer">
             <p className="text-xs text-brass-500 tracking-widest uppercase mb-2">Tutorial • Analytics</p>
@@ -62,8 +62,18 @@ export default function Home() {
               Integrating Tableau Model Context Protocol servers across Server and Cloud environments using the Gemini SDK.
             </p>
           </article>
-          
+
         </div>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="py-24">
+        <h2 className="font-serif text-3xl text-brass-400 mb-8">About</h2>
+        <p className="max-w-2xl text-lg text-starlight-300 font-light leading-relaxed">
+          Abscissa &amp; Ordinate pairs rigorous data modeling with a taste for
+          timeless design &mdash; charting new territory the way a jazz standard
+          does: structured underneath, improvised on top.
+        </p>
       </section>
 
     </div>
