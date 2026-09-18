@@ -24,10 +24,3 @@
     background: var(--color-brass-600);
   }
 }
-
-/* Buy Me a Coffee button: keep the third-party widget from ever forcing
-   horizontal overflow, whatever markup it injects. */
-#bmc-wbtn {
-  max-width: 100%;
-}
-

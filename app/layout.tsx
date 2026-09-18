@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Inter, Playfair_Display, Bree_Serif } from "next/font/google";
 import BuyMeACoffeeButton from "./BuyMeACoffeeButton";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: '--font-playfair' });
+const breeSerif = Bree_Serif({ subsets: ["latin"], weight: "400", variable: '--font-bree-serif' });
 
 export const metadata: Metadata = {
   title: "Abscissa & Ordinate",
@@ -18,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${playfair.variable} font-sans bg-space-900 text-starlight-200 antialiased min-h-screen bg-cosmic-gradient bg-fixed selection:bg-brass-500 selection:text-space-900`}>
+      <body className={`${inter.variable} ${playfair.variable} ${breeSerif.variable} font-sans bg-space-900 text-starlight-200 antialiased min-h-screen bg-cosmic-gradient bg-fixed selection:bg-brass-500 selection:text-space-900`}>
         <div className="h-px w-full bg-gradient-to-r from-transparent via-brass-400/70 to-transparent" />
         <nav className="border-b border-space-700/50 bg-space-900/70 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-6xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
