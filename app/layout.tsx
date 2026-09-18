@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display, Bree_Serif } from "next/font/google";
+import Link from "next/link";
 import BuyMeACoffeeButton from "./BuyMeACoffeeButton";
 import "./globals.css";
 
@@ -23,9 +24,9 @@ export default function RootLayout({
         <div className="h-px w-full bg-gradient-to-r from-transparent via-brass-400/70 to-transparent" />
         <nav className="border-b border-space-700/50 bg-space-900/70 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-6xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-            <span className="font-serif text-2xl font-bold tracking-wider text-brass-400">
+            <Link href="/" className="font-serif text-2xl font-bold tracking-wider text-brass-400 hover:text-brass-500 transition-colors">
               A&O
-            </span>
+            </Link>
             <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3">
               <div className="flex gap-6 sm:gap-8 text-sm tracking-widest uppercase text-starlight-300">
                 <a href="#apps" className="hover:text-brass-400 transition-colors">Apps</a>
