@@ -5,7 +5,7 @@ import CostChart from "./CostChart";
 export const metadata: Metadata = {
   title: "Cost of Doing Baseball | Abscissa & Ordinate",
   description:
-    "Every MLB team's win percentage plotted against total payroll, split into four quadrants of roster efficiency.",
+    "Every MLB team's wins plotted against total payroll, split into four quadrants of roster efficiency — or swap in batting average, home runs, ERA, and fWAR.",
 };
 
 export default function CostOfBaseballPage() {
@@ -24,21 +24,22 @@ export default function CostOfBaseballPage() {
         </h1>
         <p className="max-w-2xl text-lg text-starlight-300 font-light leading-relaxed">
           Wins don&rsquo;t come cheap &mdash; but they don&rsquo;t always come
-          expensive either. Plotting every team&rsquo;s win percentage against
-          total payroll splits the league into four quadrants: teams buying
-          their way to contention, teams punching above their budget, teams
+          expensive either. Plotting every team&rsquo;s wins against total
+          payroll splits the league into four quadrants: teams buying their
+          way to contention, teams punching above their budget, teams
           rebuilding on the cheap, and teams paying premium prices for
-          middling results.
+          middling results. Swap either axis for batting average, home runs,
+          ERA, or fWAR to explore other angles on the same 30 teams.
         </p>
       </header>
 
       <CostChart />
 
       <p className="mt-10 text-xs text-starlight-400 leading-relaxed max-w-3xl">
-        Standings from the MLB Stats API; payroll figures from Spotrac.
-        Quadrant boundaries are the league median payroll and median win
-        percentage for the current dataset, so they shift as the season and
-        payrolls change.
+        2026 season team stats &mdash; wins, batting average, home runs, ERA,
+        fWAR, and total payroll. Quadrant boundaries are the league median
+        for whichever two metrics are on the axes, so they shift as the
+        selection changes.
       </p>
     </div>
   );

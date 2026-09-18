@@ -56,7 +56,7 @@ export default function Home() {
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brass-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-t-lg"></div>
             <h3 className="text-xl font-semibold mb-3">Cost of Doing Baseball</h3>
             <p className="text-space-300 text-sm mb-6 leading-relaxed text-starlight-300">
-              Every team&rsquo;s win percentage plotted against total payroll, split into four quadrants of roster efficiency, by way of the MLB Stats API and Spotrac payroll data.
+              Every team&rsquo;s wins plotted against total payroll, split into four quadrants of roster efficiency &mdash; or swap in batting average, home runs, ERA, and fWAR.
             </p>
             <Link href="/apps/cost-of-baseball" className="text-brass-400 text-sm uppercase tracking-wider hover:text-brass-500 transition-colors">
               Launch App &rarr;
