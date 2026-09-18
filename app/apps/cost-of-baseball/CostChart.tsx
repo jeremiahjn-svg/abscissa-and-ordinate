@@ -53,6 +53,15 @@ function formatCostPerWin(v: number) {
   return `$${(v / 1_000_000).toFixed(2)}M`;
 }
 
+type CostPerWinRow = {
+  key: string;
+  name: string;
+  value: number;
+  teamID: string | null;
+  isAverage: boolean;
+  teamRank: number | null;
+};
+
 const WIDTH = 900;
 const HEIGHT = 560;
 const MARGIN = { top: 32, right: 32, bottom: 56, left: 76 };
@@ -119,11 +128,41 @@ export default function CostChart() {
   const [hoveredRankedIdx, setHoveredRankedIdx] = useState<number | null>(null);
 
   const teams = costData.teams;
-  const rankedByCostPerWin = useMemo(
-    () => [...teams].sort((a, b) => costPerWin(b) - costPerWin(a)),
-    [teams]
-  );
-  const maxCostPerWin = rankedByCostPerWin.length ? costPerWin(rankedByCostPerWin[0]) : 1;
+
+  const leagueAvgCostPerWin = useMemo(() => {
+    const totalPayroll = teams.reduce((sum, t) => sum + t.payroll, 0);
+    const totalWins = teams.reduce((sum, t) => sum + t.wins, 0);
+    return totalWins ? totalPayroll / totalWins : 0;
+  }, [teams]);
+
+  const rankedByCostPerWin = useMemo(() => {
+    const rows: CostPerWinRow[] = teams.map((t) => ({
+      key: t.teamID,
+      name: t.name,
+      value: costPerWin(t),
+      teamID: t.teamID,
+      isAverage: false,
+      teamRank: null,
+    }));
+    rows.push({
+      key: "league-average",
+      name: "League Average",
+      value: leagueAvgCostPerWin,
+      teamID: null,
+      isAverage: true,
+      teamRank: null,
+    });
+    rows.sort((a, b) => b.value - a.value);
+    let rank = 0;
+    for (const row of rows) {
+      if (!row.isAverage) row.teamRank = ++rank;
+    }
+    return rows;
+  }, [teams, leagueAvgCostPerWin]);
+
+  const maxCostPerWin = rankedByCostPerWin.length
+    ? Math.max(...rankedByCostPerWin.map((r) => r.value))
+    : 1;
   const xMetric = metricFor(xKey);
   const yMetric = metricFor(yKey);
 
@@ -355,47 +394,57 @@ export default function CostChart() {
         <h2 className="font-serif text-2xl text-brass-400 mb-2">Cost per Win</h2>
         <p className="text-starlight-300 text-sm mb-6">
           Total payroll divided by wins &mdash; who&rsquo;s paying the most (and
-          least) for each win in the standings.
+          least) for each win in the standings. The dashed bar marks the
+          league average.
         </p>
         <div className="bg-space-800 border border-space-700 rounded-lg p-4 sm:p-6">
-          {rankedByCostPerWin.map((t, i) => {
-            const value = costPerWin(t);
-            const pct = Math.max((value / maxCostPerWin) * 100, 2);
+          {rankedByCostPerWin.map((row, i) => {
+            const pct = Math.max((row.value / maxCostPerWin) * 100, 2);
             const isHovered = i === hoveredRankedIdx;
             return (
               <div
-                key={t.teamID}
+                key={row.key}
                 onMouseEnter={() => setHoveredRankedIdx(i)}
                 onMouseLeave={() => setHoveredRankedIdx(null)}
-                className="flex items-center gap-3 py-1.5"
+                className={`flex items-center gap-3 py-1.5 ${
+                  row.isAverage ? "my-1 border-y border-brass-400/30 bg-brass-500/5" : ""
+                }`}
               >
                 <span className="w-5 shrink-0 text-right text-xs text-starlight-500 tabular-nums">
-                  {i + 1}
+                  {row.isAverage ? "" : row.teamRank}
                 </span>
                 <span
                   className={`w-28 sm:w-44 shrink-0 truncate text-sm ${
-                    isHovered ? "text-brass-400" : "text-starlight-200"
+                    row.isAverage
+                      ? "italic text-brass-400 font-medium"
+                      : isHovered
+                        ? "text-brass-400"
+                        : "text-starlight-200"
                   }`}
-                  title={t.name}
+                  title={row.name}
                 >
-                  {t.name}
+                  {row.name}
                 </span>
                 <div className="flex-1 h-4 bg-space-900 rounded overflow-hidden">
                   <div
-                    className="h-full rounded transition-all duration-150"
+                    className={`h-full rounded transition-all duration-150 ${
+                      row.isAverage ? "border border-dashed border-brass-300" : ""
+                    }`}
                     style={{
                       width: `${pct}%`,
-                      backgroundColor: TEAM_COLORS[t.teamID] ?? "#E5C158",
-                      opacity: isHovered ? 1 : 0.85,
+                      backgroundColor: row.isAverage
+                        ? "transparent"
+                        : TEAM_COLORS[row.teamID as string] ?? "#E5C158",
+                      opacity: row.isAverage ? 1 : isHovered ? 1 : 0.85,
                     }}
                   />
                 </div>
                 <span
                   className={`w-16 sm:w-20 shrink-0 text-right text-sm tabular-nums ${
-                    isHovered ? "text-brass-400 font-medium" : "text-starlight-300"
+                    row.isAverage ? "text-brass-400 font-medium" : isHovered ? "text-brass-400 font-medium" : "text-starlight-300"
                   }`}
                 >
-                  {formatCostPerWin(value)}
+                  {formatCostPerWin(row.value)}
                 </span>
               </div>
             );
