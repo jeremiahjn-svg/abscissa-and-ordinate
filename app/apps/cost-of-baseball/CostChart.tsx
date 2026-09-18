@@ -45,6 +45,14 @@ function metricFor(key: MetricKey) {
   return METRICS.find((m) => m.key === key)!;
 }
 
+function costPerWin(team: Team) {
+  return team.payroll / team.wins;
+}
+
+function formatCostPerWin(v: number) {
+  return `$${(v / 1_000_000).toFixed(2)}M`;
+}
+
 const WIDTH = 900;
 const HEIGHT = 560;
 const MARGIN = { top: 32, right: 32, bottom: 56, left: 76 };
@@ -108,8 +116,14 @@ export default function CostChart() {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [xKey, setXKey] = useState<MetricKey>("payroll");
   const [yKey, setYKey] = useState<MetricKey>("wins");
+  const [hoveredRankedIdx, setHoveredRankedIdx] = useState<number | null>(null);
 
   const teams = costData.teams;
+  const rankedByCostPerWin = useMemo(
+    () => [...teams].sort((a, b) => costPerWin(b) - costPerWin(a)),
+    [teams]
+  );
+  const maxCostPerWin = rankedByCostPerWin.length ? costPerWin(rankedByCostPerWin[0]) : 1;
   const xMetric = metricFor(xKey);
   const yMetric = metricFor(yKey);
 
@@ -325,11 +339,67 @@ export default function CostChart() {
                   </div>
                 ))}
               </dl>
+              <div className="flex justify-between gap-3 mt-2 pt-2 border-t border-space-700/50">
+                <span className="text-starlight-200">Cost per Win</span>
+                <span className="text-brass-400 font-medium">{formatCostPerWin(costPerWin(active))}</span>
+              </div>
               {activeQuadrant && (
                 <p className="text-brass-500 text-xs uppercase tracking-wider mt-2">{activeQuadrant}</p>
               )}
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="mt-10">
+        <h2 className="font-serif text-2xl text-brass-400 mb-2">Cost per Win</h2>
+        <p className="text-starlight-300 text-sm mb-6">
+          Total payroll divided by wins &mdash; who&rsquo;s paying the most (and
+          least) for each win in the standings.
+        </p>
+        <div className="bg-space-800 border border-space-700 rounded-lg p-4 sm:p-6">
+          {rankedByCostPerWin.map((t, i) => {
+            const value = costPerWin(t);
+            const pct = Math.max((value / maxCostPerWin) * 100, 2);
+            const isHovered = i === hoveredRankedIdx;
+            return (
+              <div
+                key={t.teamID}
+                onMouseEnter={() => setHoveredRankedIdx(i)}
+                onMouseLeave={() => setHoveredRankedIdx(null)}
+                className="flex items-center gap-3 py-1.5"
+              >
+                <span className="w-5 shrink-0 text-right text-xs text-starlight-500 tabular-nums">
+                  {i + 1}
+                </span>
+                <span
+                  className={`w-28 sm:w-44 shrink-0 truncate text-sm ${
+                    isHovered ? "text-brass-400" : "text-starlight-200"
+                  }`}
+                  title={t.name}
+                >
+                  {t.name}
+                </span>
+                <div className="flex-1 h-4 bg-space-900 rounded overflow-hidden">
+                  <div
+                    className="h-full rounded transition-all duration-150"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: TEAM_COLORS[t.teamID] ?? "#E5C158",
+                      opacity: isHovered ? 1 : 0.85,
+                    }}
+                  />
+                </div>
+                <span
+                  className={`w-16 sm:w-20 shrink-0 text-right text-sm tabular-nums ${
+                    isHovered ? "text-brass-400 font-medium" : "text-starlight-300"
+                  }`}
+                >
+                  {formatCostPerWin(value)}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
