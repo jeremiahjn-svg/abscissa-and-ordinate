@@ -77,6 +77,29 @@ export default function BirthCityToBallparkPost() {
           harder than expected, and how Claude Code fit into building it.
         </P>
 
+        <figure className="my-10">
+          <Link href="/apps/travel" className="block group">
+            <div className="rounded-lg overflow-hidden border border-space-700 group-hover:border-brass-400/50 transition-colors">
+              <Image
+                src="/blog/birth-city-to-ballpark-diamondbacks.png"
+                alt="Birth City to Ballpark map and travel chart for the Arizona Diamondbacks, showing an arc from Johannesburg, South Africa to Chase Field in Phoenix"
+                width={1116}
+                height={612}
+                className="w-full h-auto"
+                priority
+              />
+            </div>
+          </Link>
+          <figcaption className="text-sm text-starlight-400 mt-3">
+            <Link href="/apps/travel" className="text-brass-400 hover:text-brass-500 transition-colors">
+              Click through to try it yourself
+            </Link>
+            : the Diamondbacks&rsquo; roster, from Tayler Scott&rsquo;s
+            10,010-mile trip from Johannesburg down to Ryne Nelson&rsquo;s
+            244 miles.
+          </figcaption>
+        </figure>
+
         <H2>The question</H2>
         <p className="font-serif text-xl md:text-2xl text-starlight-200 italic leading-relaxed mb-6 border-l-2 border-brass-400/50 pl-5">
           How far did each roster travel to get here?
@@ -313,28 +336,6 @@ export default function BirthCityToBallparkPost() {
           page is fully responsive, and tap-to-select works the same as
           click on mobile.
         </P>
-
-        <figure className="my-10">
-          <Link href="/apps/travel" className="block group">
-            <div className="rounded-lg overflow-hidden border border-space-700 group-hover:border-brass-400/50 transition-colors">
-              <Image
-                src="/blog/birth-city-to-ballpark-diamondbacks.png"
-                alt="Birth City to Ballpark map and travel chart for the Arizona Diamondbacks, showing an arc from Johannesburg, South Africa to Chase Field in Phoenix"
-                width={1116}
-                height={612}
-                className="w-full h-auto"
-              />
-            </div>
-          </Link>
-          <figcaption className="text-sm text-starlight-400 mt-3">
-            <Link href="/apps/travel" className="text-brass-400 hover:text-brass-500 transition-colors">
-              Click through to try it yourself
-            </Link>
-            : the Diamondbacks&rsquo; roster, from Tayler Scott&rsquo;s
-            10,010-mile trip from Johannesburg down to Ryne Nelson&rsquo;s
-            244 miles.
-          </figcaption>
-        </figure>
 
         <H2>Building it with Claude Code</H2>
         <P>
