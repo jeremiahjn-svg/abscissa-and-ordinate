@@ -27,6 +27,12 @@ export default function TravelPage() {
           birthplace to home stadium. Pick a team to see the roster&rsquo;s
           full journey.
         </p>
+        <Link
+          href="/blog/birth-city-to-ballpark"
+          className="inline-block text-brass-400 text-sm uppercase tracking-wider hover:text-brass-500 transition-colors"
+        >
+          Read how it was built &rarr;
+        </Link>
       </header>
 
       <TravelMap />
