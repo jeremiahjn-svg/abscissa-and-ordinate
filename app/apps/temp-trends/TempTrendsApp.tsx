@@ -1,0 +1,794 @@
+'use client';
+
+import { useState } from 'react';
+import { format, subYears, subDays } from 'date-fns';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+  ReferenceLine,
+  LabelList,
+} from 'recharts';
+
+interface LocationInfo {
+  lat: number;
+  lon: number;
+  name: string;
+}
+
+interface PrimaryData {
+  times: string[];
+  temps: number[];
+  startDate: Date;
+  endDate: Date;
+}
+
+interface MergedChartPoint {
+  dateStr: string;
+  dateLabel: string;
+  primaryVal: number;
+  histVal: number;
+}
+
+interface SingleDayHistoryPoint {
+  year: number;
+  temp: number;
+  isCurrent?: boolean;
+}
+
+const parseLocalDate = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+export default function TempTrendsApp() {
+  const [query, setQuery] = useState<string>('');
+  const [location, setLocation] = useState<LocationInfo | null>(null);
+
+  const [timeframe, setTimeframe] = useState<'forecast' | 'past2weeks'>('forecast');
+  const [compareMode, setCompareMode] = useState<'single' | 'avg'>('avg');
+  const [yearsAgo, setYearsAgo] = useState<number>(1);
+  const [avgSpan, setAvgSpan] = useState<number>(10);
+
+  const [primaryDailyData, setPrimaryDailyData] = useState<PrimaryData | null>(null);
+  const [chartData, setChartData] = useState<MergedChartPoint[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [tempDiff, setTempDiff] = useState<string | null>(null);
+
+  // Drill-down 30-Year Bar Chart State
+  const [selectedDayDate, setSelectedDayDate] = useState<string>('');
+  const [selectedDayLabel, setSelectedDayLabel] = useState<string>('');
+  const [selectedDayPrimaryTemp, setSelectedDayPrimaryTemp] = useState<number | null>(null);
+  const [barData, setBarData] = useState<SingleDayHistoryPoint[]>([]);
+  const [loadingBar, setLoadingBar] = useState<boolean>(false);
+
+  const currentYear = new Date().getFullYear();
+  const dateFormat = 'yyyy-MM-dd';
+
+  const fetchHistoricalRange = async (
+    lat: number,
+    lon: number,
+    startDate: Date,
+    endDate: Date
+  ): Promise<number[]> => {
+    const res = await fetch(
+      `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${format(
+        startDate,
+        dateFormat
+      )}&end_date=${format(endDate, dateFormat)}&daily=temperature_2m_max&temperature_unit=fahrenheit&timezone=auto`
+    );
+    const data = await res.json();
+    return data?.daily?.temperature_2m_max || [];
+  };
+
+  const fetchPrimaryData = async (
+    lat: number,
+    lon: number,
+    modeTimeframe: 'forecast' | 'past2weeks'
+  ): Promise<PrimaryData> => {
+    if (modeTimeframe === 'forecast') {
+      const res = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max&forecast_days=10&temperature_unit=fahrenheit&timezone=auto`
+      );
+      const data = await res.json();
+      if (!data.daily?.time || data.daily.time.length === 0) {
+        throw new Error('Could not retrieve forecast records.');
+      }
+
+      const times: string[] = data.daily.time;
+      return {
+        times,
+        temps: data.daily.temperature_2m_max,
+        startDate: parseLocalDate(times[0]),
+        endDate: parseLocalDate(times[times.length - 1]),
+      };
+    } else {
+      const today = new Date();
+      const pastStart = subDays(today, 14);
+      const pastEnd = subDays(today, 1);
+
+      const res = await fetch(
+        `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${format(
+          pastStart,
+          dateFormat
+        )}&end_date=${format(pastEnd, dateFormat)}&daily=temperature_2m_max&temperature_unit=fahrenheit&timezone=auto`
+      );
+      const data = await res.json();
+      if (!data.daily?.time || data.daily.time.length === 0) {
+        throw new Error('Could not retrieve past 2 weeks actuals.');
+      }
+
+      const times: string[] = data.daily.time;
+      return {
+        times,
+        temps: data.daily.temperature_2m_max,
+        startDate: parseLocalDate(times[0]),
+        endDate: parseLocalDate(times[times.length - 1]),
+      };
+    }
+  };
+
+  const load30YearBarHistory = async (lat: number, lon: number, dateString: string, primaryTemp: number) => {
+    setLoadingBar(true);
+    setSelectedDayDate(dateString);
+    setSelectedDayPrimaryTemp(primaryTemp);
+
+    try {
+      const targetDate = parseLocalDate(dateString);
+      setSelectedDayLabel(format(targetDate, 'MMM d'));
+      const offsets = Array.from({ length: 30 }, (_, i) => 30 - i);
+
+      const historyPoints = await Promise.all(
+        offsets.map(async (offset) => {
+          const pastDate = subYears(targetDate, offset);
+          const temps = await fetchHistoricalRange(lat, lon, pastDate, pastDate);
+          return {
+            year: pastDate.getFullYear(),
+            temp: temps.length > 0 ? Math.round(temps[0]) : 0,
+            isCurrent: false,
+          };
+        })
+      );
+
+      historyPoints.push({
+        year: currentYear,
+        temp: Math.round(primaryTemp),
+        isCurrent: true,
+      });
+
+      setBarData(historyPoints.filter((p) => p.temp !== 0));
+    } catch {
+      // Keep existing data on failure
+    } finally {
+      setLoadingBar(false);
+    }
+  };
+
+  const computeComparison = async (
+    lat: number,
+    lon: number,
+    primaryInfo: PrimaryData,
+    cMode: 'single' | 'avg',
+    singleOffset: number,
+    spanCount: number
+  ) => {
+    const { times, temps, startDate, endDate } = primaryInfo;
+    let historicalDailyAverages: number[] = [];
+
+    if (cMode === 'single') {
+      const histStart = subYears(startDate, singleOffset);
+      const histEnd = subYears(endDate, singleOffset);
+      const fetchedTemps = await fetchHistoricalRange(lat, lon, histStart, histEnd);
+      if (fetchedTemps.length === 0) throw new Error(`No historical data found for ${singleOffset} years ago.`);
+      historicalDailyAverages = fetchedTemps;
+    } else {
+      const offsets = Array.from({ length: spanCount }, (_, i) => i + 1);
+      const allYears = await Promise.all(
+        offsets.map((offset) => {
+          const histStart = subYears(startDate, offset);
+          const histEnd = subYears(endDate, offset);
+          return fetchHistoricalRange(lat, lon, histStart, histEnd);
+        })
+      );
+
+      historicalDailyAverages = times.map((_, dayIndex: number) => {
+        let sum = 0;
+        let count = 0;
+        allYears.forEach((yearArray) => {
+          if (yearArray[dayIndex] !== undefined) {
+            sum += yearArray[dayIndex];
+            count++;
+          }
+        });
+        return count > 0 ? sum / count : temps[dayIndex];
+      });
+    }
+
+    let totalPrimary = 0;
+    let totalHist = 0;
+
+    const merged: MergedChartPoint[] = times.map((dateStr: string, index: number) => {
+      const currentDate = parseLocalDate(dateStr);
+      const primaryVal = temps[index];
+      const histVal = historicalDailyAverages[index] ?? primaryVal;
+
+      totalPrimary += primaryVal;
+      totalHist += histVal;
+
+      return {
+        dateStr,
+        dateLabel: format(currentDate, 'MMM d'),
+        primaryVal: Math.round(primaryVal),
+        histVal: Math.round(histVal),
+      };
+    });
+
+    const avgDiff = (totalPrimary - totalHist) / merged.length;
+    setTempDiff(avgDiff.toFixed(1));
+    setChartData(merged);
+
+    if (merged.length > 0 && !selectedDayDate) {
+      load30YearBarHistory(lat, lon, merged[0].dateStr, merged[0].primaryVal);
+    }
+  };
+
+  const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!query) return;
+
+    setLoading(true);
+    setError('');
+    setChartData([]);
+    setBarData([]);
+    setTempDiff(null);
+
+    try {
+      const geoRes = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1`
+      );
+      const geoData = await geoRes.json();
+
+      if (!geoData.results || geoData.results.length === 0) {
+        throw new Error('Location or zip code not found.');
+      }
+
+      const { latitude, longitude, name, admin1, country } = geoData.results[0];
+      const locObj: LocationInfo = {
+        lat: latitude,
+        lon: longitude,
+        name: `${name}${admin1 ? `, ${admin1}` : ''} (${country})`,
+      };
+      setLocation(locObj);
+
+      const primary = await fetchPrimaryData(latitude, longitude, timeframe);
+      setPrimaryDailyData(primary);
+
+      await computeComparison(latitude, longitude, primary, compareMode, yearsAgo, avgSpan);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Something went wrong fetching data.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTimeframeChange = async (newTimeframe: 'forecast' | 'past2weeks') => {
+    setTimeframe(newTimeframe);
+    if (location) {
+      setLoading(true);
+      setError('');
+      try {
+        const primary = await fetchPrimaryData(location.lat, location.lon, newTimeframe);
+        setPrimaryDailyData(primary);
+        await computeComparison(location.lat, location.lon, primary, compareMode, yearsAgo, avgSpan);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleSingleYearChange = async (newYears: number) => {
+    setCompareMode('single');
+    setYearsAgo(newYears);
+    if (location && primaryDailyData) {
+      setLoading(true);
+      try {
+        await computeComparison(location.lat, location.lon, primaryDailyData, 'single', newYears, avgSpan);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleAvgSpanChange = async (span: number) => {
+    setCompareMode('avg');
+    setAvgSpan(span);
+    if (location && primaryDailyData) {
+      setLoading(true);
+      try {
+        await computeComparison(location.lat, location.lon, primaryDailyData, 'avg', yearsAgo, span);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Line Chart Point Selection
+  const handlePointSelect = (point: MergedChartPoint) => {
+    if (!location) return;
+    load30YearBarHistory(location.lat, location.lon, point.dateStr, point.primaryVal);
+  };
+
+  const handleLineChartClick = (state: any) => {
+    if (!state || !location || chartData.length === 0) return;
+
+    if (state.activePayload && state.activePayload.length > 0) {
+      const clickedData = state.activePayload[0].payload as MergedChartPoint;
+      handlePointSelect(clickedData);
+      return;
+    }
+
+    if (typeof state.activeTooltipIndex === 'number' && chartData[state.activeTooltipIndex]) {
+      handlePointSelect(chartData[state.activeTooltipIndex]);
+      return;
+    }
+
+    if (state.activeLabel) {
+      const matched = chartData.find((d) => d.dateLabel === state.activeLabel);
+      if (matched) handlePointSelect(matched);
+    }
+  };
+
+  // Bar Chart Year Selection: Sets the reference year (blue line) to the selected year
+  const handleYearSelect = (selectedYear: number) => {
+    if (selectedYear === currentYear) return;
+    const diff = currentYear - selectedYear;
+    if (diff >= 1 && diff <= 30) {
+      handleSingleYearChange(diff);
+    }
+  };
+
+  const comparisonLabel =
+    compareMode === 'single'
+      ? `${currentYear - yearsAgo} (${yearsAgo}y ago)`
+      : `Past ${avgSpan}-Yr Avg`;
+
+  const primaryLabel = timeframe === 'forecast' ? '10-Day Forecast High' : 'Past 2-Week Actual High';
+
+  const historicalOnly = barData.filter((b) => !b.isCurrent);
+
+  const barMax =
+    historicalOnly.length > 0
+      ? historicalOnly.reduce((prev, curr) => (curr.temp > prev.temp ? curr : prev), historicalOnly[0])
+      : null;
+
+  const barMin =
+    historicalOnly.length > 0
+      ? historicalOnly.reduce((prev, curr) => (curr.temp < prev.temp ? curr : prev), historicalOnly[0])
+      : null;
+
+  const barHistoricalAvg =
+    historicalOnly.length > 0
+      ? Math.round(historicalOnly.reduce((acc, cur) => acc + cur.temp, 0) / historicalOnly.length)
+      : null;
+
+  const selectedYearVal = compareMode === 'single' ? currentYear - yearsAgo : null;
+
+  return (
+    <div className="space-y-6">
+      {/* Search Bar */}
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Enter City or Zip (e.g. 92120, Austin, Chicago)"
+          className="bg-space-900 border border-space-700 focus:border-brass-400 focus:outline-none px-4 py-3 rounded-lg w-full sm:w-96 text-starlight-100 placeholder-starlight-400 shadow-inner"
+        />
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-brass-500 hover:bg-brass-400 active:bg-brass-600 transition-colors text-space-900 font-semibold px-6 py-3 rounded-lg shadow-lg disabled:opacity-50 cursor-pointer"
+        >
+          {loading ? 'Crunching...' : 'Compare History'}
+        </button>
+      </form>
+
+      {/* Controls Panel */}
+      <div className="bg-space-800/90 border border-space-700 rounded-lg p-5 shadow-xl space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          {/* Timeframe Selector */}
+          <div className="space-y-2">
+            <span className="text-xs font-semibold text-starlight-400 uppercase tracking-wider">
+              1. Timeframe
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleTimeframeChange('forecast')}
+                className={`py-2 px-3 text-xs md:text-sm font-semibold rounded-lg border transition-all cursor-pointer ${
+                  timeframe === 'forecast'
+                    ? 'bg-brass-500/20 border-brass-400 text-brass-300 shadow-md'
+                    : 'bg-space-900/60 border-space-700/60 text-starlight-400 hover:bg-space-900'
+                }`}
+              >
+                10-Day Forecast
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTimeframeChange('past2weeks')}
+                className={`py-2 px-3 text-xs md:text-sm font-semibold rounded-lg border transition-all cursor-pointer ${
+                  timeframe === 'past2weeks'
+                    ? 'bg-brass-500/20 border-brass-400 text-brass-300 shadow-md'
+                    : 'bg-space-900/60 border-space-700/60 text-starlight-400 hover:bg-space-900'
+                }`}
+              >
+                Past 2 Weeks
+              </button>
+            </div>
+          </div>
+
+          {/* Baseline Presets */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-xs font-semibold text-starlight-400 uppercase tracking-wider">
+              <span>2. Multi-Year Baseline</span>
+              {compareMode === 'avg' && <span className="text-brass-400 text-xs">active</span>}
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {[5, 10, 20, 30].map((span) => (
+                <button
+                  key={span}
+                  type="button"
+                  onClick={() => handleAvgSpanChange(span)}
+                  className={`py-2 px-1 text-xs md:text-sm font-semibold rounded-lg border transition-all cursor-pointer ${
+                    compareMode === 'avg' && avgSpan === span
+                      ? 'bg-brass-500/20 border-brass-400 text-brass-300 shadow-md'
+                      : 'bg-space-900/60 border-space-700/60 text-starlight-400 hover:text-starlight-200 hover:bg-space-900'
+                  }`}
+                >
+                  {span}-Yr
+                </button>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Stepper for single year */}
+        <div className="pt-3 border-t border-space-700 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-starlight-400">
+          <span className="flex items-center gap-1.5">
+            <span>Or compare against a single year:</span>
+            {compareMode === 'single' && (
+              <span className="px-1.5 py-0.5 rounded bg-brass-500/20 text-brass-300 text-[10px] font-semibold border border-brass-400/40">
+                Active
+              </span>
+            )}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleSingleYearChange(Math.max(1, yearsAgo - 1))}
+              disabled={yearsAgo <= 1}
+              className="px-2 py-1 bg-space-900 rounded border border-space-700 disabled:opacity-30 cursor-pointer hover:border-brass-400/50"
+            >
+              ◀
+            </button>
+            <span className={`font-bold px-2 ${compareMode === 'single' ? 'text-brass-300' : 'text-starlight-400'}`}>
+              {currentYear - yearsAgo} ({yearsAgo}y ago)
+            </span>
+            <button
+              type="button"
+              onClick={() => handleSingleYearChange(Math.min(30, yearsAgo + 1))}
+              disabled={yearsAgo >= 30}
+              className="px-2 py-1 bg-space-900 rounded border border-space-700 disabled:opacity-30 cursor-pointer hover:border-brass-400/50"
+            >
+              ▶
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-950/50 border border-red-800 text-red-200 p-4 rounded-lg text-center">
+          {error}
+        </div>
+      )}
+
+      {/* PRIMARY CONTROLLER (TOP): Multi-Day Range Line Chart */}
+      {chartData.length > 0 && location && (
+        <div className="bg-space-800 border border-space-700 rounded-lg p-6 shadow-2xl space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-space-700 pb-4">
+            <div>
+              <h2 className="font-serif text-xl text-starlight-100">{location.name} Overview</h2>
+              <p className="text-xs text-starlight-400">
+                {primaryLabel} vs. <span className="font-semibold text-brass-300">{comparisonLabel}</span> (°F) — <span className="text-brass-400 font-medium">Click any point to drill down into 30-year history</span>
+              </p>
+            </div>
+            {tempDiff !== null && (
+              <div
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${
+                  Number(tempDiff) >= 0
+                    ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                    : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                }`}
+              >
+                {Number(tempDiff) >= 0 ? `+${tempDiff}°F warmer` : `${tempDiff}°F cooler`} than baseline
+              </div>
+            )}
+          </div>
+
+          <div className="h-72 w-full cursor-pointer select-none">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={chartData}
+                margin={{ top: 10, right: 20, bottom: 5, left: -20 }}
+                onClick={handleLineChartClick}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#131A2A" />
+                <XAxis dataKey="dateLabel" stroke="#94a3b8" fontSize={12} />
+                <YAxis stroke="#94a3b8" fontSize={12} domain={['auto', 'auto']} unit="°" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#020204',
+                    borderColor: '#131A2A',
+                    borderRadius: '0.5rem',
+                    color: '#F8FAFC',
+                  }}
+                />
+                <Legend wrapperStyle={{ paddingTop: '8px' }} />
+
+                {/* Vertical line indicator for the active selected day */}
+                {selectedDayLabel && (
+                  <ReferenceLine
+                    x={selectedDayLabel}
+                    stroke="#E5C158"
+                    strokeDasharray="4 4"
+                    strokeWidth={2}
+                  />
+                )}
+
+                <Line
+                  type="monotone"
+                  dataKey="primaryVal"
+                  name={`${primaryLabel} (°F)`}
+                  stroke="#E5C158"
+                  strokeWidth={3}
+                  dot={(dotProps: any) => {
+                    const { cx, cy, payload } = dotProps;
+                    const isSelected = selectedDayDate === payload.dateStr;
+                    return (
+                      <circle
+                        key={`dot-${payload.dateStr}`}
+                        cx={cx}
+                        cy={cy}
+                        r={isSelected ? 7 : 4}
+                        fill={isSelected ? '#E5C158' : '#F0DFA0'}
+                        stroke="#F8FAFC"
+                        strokeWidth={isSelected ? 2 : 1}
+                        className="cursor-pointer transition-all"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePointSelect(payload);
+                        }}
+                      />
+                    );
+                  }}
+                  activeDot={{
+                    r: 8,
+                    cursor: 'pointer',
+                    onClick: (_: any, event: any) => {
+                      event?.stopPropagation?.();
+                      if (event?.payload) handlePointSelect(event.payload);
+                    },
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="histVal"
+                  name={`${comparisonLabel} Baseline (°F)`}
+                  stroke="#38bdf8"
+                  strokeWidth={3}
+                  strokeDasharray="4 4"
+                  dot={{ r: 3, cursor: 'pointer' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* SECONDARY DRILL-DOWN (BOTTOM): 30-Year History Bar Chart & Stats */}
+      {chartData.length > 0 && location && (
+        <div className="bg-space-800 border border-space-700 rounded-lg p-6 shadow-2xl space-y-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-space-700 pb-4">
+            <div>
+              <h3 className="font-serif text-xl text-starlight-100 flex items-center gap-2">
+                30-Year History: {selectedDayDate ? format(parseLocalDate(selectedDayDate), 'MMMM d') : ''}
+              </h3>
+              <p className="text-xs text-starlight-400">
+                Daily high temperatures across every year. <span className="text-brass-400 font-medium">Click any year bar to compare against that year above.</span>
+              </p>
+            </div>
+            <div className="text-xs bg-space-900/80 border border-space-700 text-starlight-300 px-3 py-1.5 rounded-lg">
+              Date: <span className="font-bold text-brass-400">{selectedDayLabel}</span>
+              {compareMode === 'single' && (
+                <span className="ml-2 pl-2 border-l border-space-600">
+                  Baseline: <span className="font-bold text-sky-400">{currentYear - yearsAgo}</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* SUMMARY STATS BAR */}
+          {barData.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-space-950/60 p-3.5 rounded-lg border border-space-700/80">
+              <div className="space-y-0.5">
+                <div className="text-[11px] font-semibold tracking-wide text-starlight-400 uppercase">
+                  {timeframe === 'forecast' ? 'Forecast' : 'Current Actual'}
+                </div>
+                <div className="text-xl font-extrabold text-brass-400">
+                  {selectedDayPrimaryTemp !== null ? `${Math.round(selectedDayPrimaryTemp)}°F` : '--'}
+                </div>
+              </div>
+
+              <div className="space-y-0.5">
+                <div className="text-[11px] font-semibold tracking-wide text-starlight-400 uppercase">
+                  30-Yr Max
+                </div>
+                <div className="text-xl font-extrabold text-orange-400 flex items-baseline gap-1.5">
+                  {barMax ? `${barMax.temp}°F` : '--'}
+                  {barMax && <span className="text-xs font-normal text-starlight-400">({barMax.year})</span>}
+                </div>
+              </div>
+
+              <div className="space-y-0.5">
+                <div className="text-[11px] font-semibold tracking-wide text-starlight-400 uppercase">
+                  30-Yr Min
+                </div>
+                <div className="text-xl font-extrabold text-cyan-400 flex items-baseline gap-1.5">
+                  {barMin ? `${barMin.temp}°F` : '--'}
+                  {barMin && <span className="text-xs font-normal text-starlight-400">({barMin.year})</span>}
+                </div>
+              </div>
+
+              <div className="space-y-0.5">
+                <div className="text-[11px] font-semibold tracking-wide text-starlight-400 uppercase">
+                  30-Yr Mean (Avg)
+                </div>
+                <div className="text-xl font-extrabold text-sky-400">
+                  {barHistoricalAvg !== null ? `${barHistoricalAvg}°F` : '--'}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {loadingBar ? (
+            <div className="h-72 flex items-center justify-center text-starlight-400 text-sm animate-pulse">
+              Fetching 30 years of daily readings for {selectedDayDate}...
+            </div>
+          ) : (
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={barData}
+                  margin={{ top: 25, right: 10, bottom: 5, left: -20 }}
+                  onClick={(state: any) => {
+                    if (state && state.activePayload && state.activePayload.length > 0) {
+                      const clicked = state.activePayload[0].payload as SingleDayHistoryPoint;
+                      handleYearSelect(clicked.year);
+                    }
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#131A2A" vertical={false} />
+                  <XAxis
+                    dataKey="year"
+                    stroke="#94a3b8"
+                    fontSize={11}
+                    interval={2}
+                  />
+                  <YAxis stroke="#94a3b8" fontSize={11} domain={['auto', 'auto']} unit="°" />
+                  <Tooltip
+                    formatter={(val: any) => [`${val}°F`, 'High Temp']}
+                    labelFormatter={(label) => `Year: ${label} (Click to set baseline)`}
+                    contentStyle={{
+                      backgroundColor: '#020204',
+                      borderColor: '#131A2A',
+                      borderRadius: '0.5rem',
+                      color: '#F8FAFC',
+                    }}
+                  />
+                  {barHistoricalAvg && (
+                    <ReferenceLine
+                      y={barHistoricalAvg}
+                      stroke="#38bdf8"
+                      strokeDasharray="3 3"
+                      label={{
+                        value: `Mean: ${barHistoricalAvg}°`,
+                        fill: '#38bdf8',
+                        fontSize: 10,
+                        position: 'top',
+                      }}
+                    />
+                  )}
+                  <Bar dataKey="temp" radius={[4, 4, 0, 0]} className="cursor-pointer">
+                    <LabelList
+                      dataKey="temp"
+                      position="top"
+                      fill="#CBD5E1"
+                      fontSize={10}
+                      formatter={(val: any) => `${val}°`}
+                    />
+                    {barData.map((entry) => {
+                      const isCurrentObservation = entry.isCurrent;
+                      const isSelectedReferenceYear = selectedYearVal === entry.year;
+
+                      let barFill = '#38bdf8'; // historical blue
+                      if (isCurrentObservation) {
+                        barFill = '#E5C158'; // brass — current/forecasted
+                      } else if (isSelectedReferenceYear) {
+                        barFill = '#3b82f6'; // highlighted active baseline year
+                      }
+
+                      return (
+                        <Cell
+                          key={`cell-${entry.year}`}
+                          fill={barFill}
+                          stroke={isSelectedReferenceYear ? '#F8FAFC' : 'none'}
+                          strokeWidth={isSelectedReferenceYear ? 2 : 0}
+                          className="cursor-pointer transition-opacity hover:opacity-80"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleYearSelect(entry.year);
+                          }}
+                        />
+                      );
+                    })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between text-xs text-starlight-400 pt-2 border-t border-space-700/80">
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 bg-brass-400 rounded-sm inline-block"></span>
+                {currentYear} Current / Forecasted
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 bg-sky-400 rounded-sm inline-block"></span>
+                Past Years (Click to set baseline)
+              </span>
+              {compareMode === 'single' && (
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 bg-blue-500 border border-starlight-100 rounded-sm inline-block"></span>
+                  Active Baseline ({currentYear - yearsAgo})
+                </span>
+              )}
+            </div>
+            <span>Open-Meteo Historical ERA5 Archive</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

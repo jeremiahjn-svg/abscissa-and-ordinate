@@ -37,18 +37,13 @@ export default function Home() {
           {/* Example App Card */}
           <div className="group relative bg-space-800 border border-space-700 p-8 rounded-lg hover:border-brass-400/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(229,193,88,0.1)]">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brass-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-t-lg"></div>
-            <h3 className="text-xl font-semibold mb-3">Weather Sanity Check</h3>
+            <h3 className="text-xl font-semibold mb-3">Temp Trends</h3>
             <p className="text-space-300 text-sm mb-6 leading-relaxed text-starlight-300">
-              A Next.js application evaluating daily temperature deviations against 10-year historical averages using Recharts and Tailwind CSS.
+              Compare upcoming forecasts and recent temperatures against 5- to 30-year historical climate baselines, with a 30-year drill-down for any single day.
             </p>
-            <a
-              href="https://temp-trends.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brass-400 text-sm uppercase tracking-wider hover:text-brass-500 transition-colors"
-            >
+            <Link href="/apps/temp-trends" className="text-brass-400 text-sm uppercase tracking-wider hover:text-brass-500 transition-colors">
               Launch App &rarr;
-            </a>
+            </Link>
           </div>
 
           {/* Cost of Doing Baseball */}
