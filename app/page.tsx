@@ -66,21 +66,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Blog & How-To Section */}
+      {/* Blog Section */}
       <section id="blog" className="py-24 border-b border-space-700/50">
-        <h2 className="font-serif text-3xl text-brass-400 mb-12">Latest Insights & How-Tos</h2>
+        <h2 className="font-serif text-3xl text-brass-400 mb-12">From the Blog</h2>
         <div className="space-y-8">
 
-          {/* Example Blog Post */}
-          <article className="group cursor-pointer">
-            <p className="text-xs text-brass-500 tracking-widest uppercase mb-2">Tutorial • Analytics</p>
-            <h3 className="text-2xl font-serif text-starlight-200 group-hover:text-brass-400 transition-colors mb-3">
-              Deploying Tableau MCP Servers
-            </h3>
-            <p className="text-starlight-300 max-w-3xl">
-              Integrating Tableau Model Context Protocol servers across Server and Cloud environments using the Gemini SDK.
-            </p>
-          </article>
+          <Link href="/blog/birth-city-to-ballpark" className="group block">
+            <article>
+              <p className="text-xs text-brass-500 tracking-widest uppercase mb-2">Tutorial • Data Viz</p>
+              <h3 className="text-2xl font-serif text-starlight-200 group-hover:text-brass-400 transition-colors mb-3">
+                Birth City to Ballpark: Mapping How Far Every MLB Player Traveled to Get to Work
+              </h3>
+              <p className="text-starlight-300 max-w-3xl">
+                How the travel map works: a static-data pipeline over the Lahman Baseball Database, offline geocoding with a layered fallback chain, haversine distance, and d3-geo arcs &mdash; built with Claude Code.
+              </p>
+            </article>
+          </Link>
 
         </div>
       </section>

@@ -30,7 +30,7 @@ export default function RootLayout({
             <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3">
               <div className="flex gap-6 sm:gap-8 text-sm tracking-widest uppercase text-starlight-300">
                 <a href="#apps" className="hover:text-brass-400 transition-colors">Apps</a>
-                <a href="#blog" className="hover:text-brass-400 transition-colors">Insights</a>
+                <a href="#blog" className="hover:text-brass-400 transition-colors">Blog</a>
                 <a href="#about" className="hover:text-brass-400 transition-colors">About</a>
               </div>
               <BuyMeACoffeeButton />
